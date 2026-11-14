@@ -2,16 +2,17 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecurePass: Генератор паролей</title>
+<title>SecurePass: Ультимативный генератор</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 
 :root {
     --bg: #0d1117;
-    --card-bg: rgba(22, 27, 34, 0.8);
+    --card-bg: rgba(22, 27, 34, 0.85);
     --text: #e6edf3;
     --text-muted: #8b949e;
-    --accent: #10b981; /* Мягкий изумруд */
+    --accent: #10b981;
     --accent-hover: #34d399;
     --accent-glow: rgba(16, 185, 129, 0.2);
     --success: #10b981;
@@ -19,12 +20,12 @@
     --error: #ef4444;
     --option-bg: rgba(255, 255, 255, 0.03);
     --border: rgba(255, 255, 255, 0.08);
-    --container-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    --container-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="light"] {
     --bg: #f0f7f4;
-    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-bg: rgba(255, 255, 255, 0.9);
     --text: #1f2937;
     --text-muted: #6b7280;
     --accent: #059669;
@@ -48,7 +49,6 @@ body {
     position: relative;
 }
 
-/* Мягкий фоновый градиент */
 body::before {
     content: "";
     position: fixed;
@@ -63,16 +63,15 @@ body::before {
     100% { transform: translate(10%, 10%) scale(1.1); }
 }
 
-/* Контейнер */
 .container {
     background: var(--card-bg);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border);
-    padding: 40px 30px;
+    padding: 30px 25px;
     border-radius: 24px;
     box-shadow: var(--container-shadow);
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
     position: relative;
     z-index: 2;
     animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -80,12 +79,11 @@ body::before {
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Заголовок */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 h1 {
     font-size: 24px;
@@ -106,6 +104,34 @@ h1 {
 }
 .theme-toggle:hover { background: var(--border); transform: scale(1.05); }
 
+/* Вкладки */
+.mode-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    background: var(--option-bg);
+    padding: 5px;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+.mode-tab {
+    flex: 1;
+    padding: 8px 5px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    transition: 0.3s;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.mode-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 10px -2px var(--accent-glow);
+}
+
 /* Блок пароля */
 .password-box {
     background: var(--option-bg);
@@ -114,40 +140,62 @@ h1 {
     padding: 20px;
     margin-bottom: 15px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 10px;
     transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
 }
-.password-box:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 20px var(--accent-glow);
-}
+.password-box:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
 
 .password-text {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     word-break: break-all;
-    text-align: left;
-    flex-grow: 1;
     color: var(--accent);
+    line-height: 1.4;
+    min-height: 28px;
+    transition: opacity 0.3s;
 }
 
-.copy-btn {
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+.action-btn {
+    flex: 1;
     background: var(--border);
     border: none;
     color: var(--text);
     padding: 10px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
+    font-size: 13px;
+    font-weight: 600;
     transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
-.copy-btn:hover { background: var(--accent); color: white; }
-.copy-btn:active { transform: scale(0.9); }
+.action-btn:hover { background: var(--accent); color: white; }
+.action-btn:active { transform: scale(0.95); }
 
-/* Индикатор надежности */
+/* Таймер автоочистки */
+.timer-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 5px;
+    display: none;
+}
+.timer-fill {
+    height: 100%;
+    background: var(--error);
+    width: 100%;
+    transition: width 1s linear;
+}
+
 .strength-bar {
     height: 6px;
     background: var(--border);
@@ -166,7 +214,7 @@ h1 {
     font-size: 12px;
     font-weight: 600;
     text-align: right;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -177,116 +225,126 @@ h1 {
     background: var(--option-bg);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 15px;
+    margin-bottom: 20px;
 }
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    font-size: 14px;
+    padding: 10px 0;
+    font-size: 13px;
     font-weight: 600;
 }
 .setting-item:not(:last-child) { border-bottom: 1px solid var(--border); }
 
-/* Красивые переключатели */
 .switch {
-    position: relative;
-    display: inline-block;
-    width: 46px;
-    height: 26px;
+    position: relative; display: inline-block; width: 44px; height: 24px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
     position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--border);
-    transition: .4s;
-    border-radius: 34px;
+    background-color: var(--border); transition: .4s; border-radius: 34px;
 }
 .slider:before {
-    position: absolute; content: "";
-    height: 18px; width: 18px;
-    left: 4px; bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
+    position: absolute; content: ""; height: 16px; width: 16px;
+    left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
 }
 input:checked + .slider { background-color: var(--accent); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* Ползунок длины */
 input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    background: transparent;
-    margin-top: 10px;
+    -webkit-appearance: none; width: 100%; background: transparent; margin-top: 5px;
 }
 input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 22px; width: 22px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    margin-top: -9px;
-    box-shadow: 0 0 10px var(--accent-glow);
-    transition: transform 0.2s;
+    -webkit-appearance: none; height: 20px; width: 20px;
+    border-radius: 50%; background: var(--accent);
+    cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px var(--accent-glow);
 }
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
 input[type=range]::-webkit-slider-runnable-track {
-    width: 100%; height: 4px;
-    cursor: pointer;
-    background: var(--border);
-    border-radius: 2px;
+    width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px;
 }
-.length-value {
-    color: var(--accent);
-    font-weight: 800;
-    font-size: 18px;
+.length-value { color: var(--accent); font-weight: 800; font-size: 16px; }
+
+select {
+    background: var(--border); color: var(--text); border: none; padding: 5px 10px;
+    border-radius: 8px; outline: none; font-family: inherit; cursor: pointer;
 }
 
-/* Кнопка генерации */
+/* Кнопка */
 .btn-generate {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 18px;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 800;
-    width: 100%;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s;
-    box-shadow: 0 10px 20px -10px var(--accent);
+    background: var(--accent); color: white; border: none;
+    padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 800;
+    width: 100%; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+    transition: all 0.3s; box-shadow: 0 10px 20px -10px var(--accent);
 }
-.btn-generate:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 15px 25px -10px var(--accent);
-}
+.btn-generate:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 15px 25px -10px var(--accent); }
 .btn-generate:active { transform: translateY(1px); }
+
+/* Модалки / Скрытые блоки */
+.hidden { display: none !important; }
+
+/* История */
+.history-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+}
+.history-item:last-child { border-bottom: none; }
+.history-text { color: var(--text-muted); cursor: pointer; transition: 0.2s; word-break: break-all; flex-grow: 1; margin-right: 10px; }
+.history-text:hover { color: var(--accent); }
+.history-del { background: none; border: none; color: var(--error); cursor: pointer; font-weight: bold; padding: 5px; }
+
+/* QR-код */
+#qr-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-radius: 16px;
+    margin-top: 15px;
+    animation: fadeIn 0.3s;
+}
+#qr-container img, #qr-container canvas {
+    width: 150px !important;
+    height: 150px !important;
+}
+
+/* Таймер */
+.timer-indicator {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 10px;
+    color: var(--error);
+    font-weight: 800;
+    opacity: 0;
+    transition: 0.3s;
+}
+.timer-indicator.active { opacity: 1; }
 
 /* Уведомление */
 .toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
+    position: fixed; bottom: 30px; left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--accent);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 700;
+    background: var(--accent); color: white;
+    padding: 12px 24px; border-radius: 30px;
+    font-size: 14px; font-weight: 700;
     box-shadow: 0 10px 30px var(--accent-glow);
-    opacity: 0;
-    transition: 0.3s;
-    pointer-events: none;
-    z-index: 10;
+    opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100;
 }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -297,15 +355,30 @@ input[type=range]::-webkit-slider-runnable-track {
         <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙</button>
     </div>
 
+    <div class="mode-tabs">
+        <div class="mode-tab active" onclick="setMode('standard', this)">Стандарт</div>
+        <div class="mode-tab" onclick="setMode('phrase', this)">Фразовый</div>
+        <div class="mode-tab" onclick="setMode('pin', this)">PIN-код</div>
+        <div class="mode-tab" onclick="setMode('word', this)">Слово</div>
+    </div>
+
     <div class="password-box">
+        <span class="timer-indicator" id="timer-ind">30s</span>
         <div class="password-text" id="password-display">Нажмите «Сгенерировать»</div>
-        <button class="copy-btn" onclick="copyPassword()" title="Скопировать">📋</button>
+        <div class="timer-bar" id="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" onclick="copyPassword()">📋 Копировать</button>
+            <button class="action-btn" onclick="toggleQR()">📱 QR-код</button>
+        </div>
+        <div id="qr-container" class="hidden"></div>
     </div>
 
     <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
     <div class="strength-text" id="strength-text">Ожидание</div>
 
-    <div class="settings">
+    <!-- Настройки: Стандарт -->
+    <div class="settings" id="settings-standard">
         <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
                 <span>Длина пароля</span>
@@ -313,101 +386,313 @@ input[type=range]::-webkit-slider-runnable-track {
             </div>
             <input type="range" min="4" max="50" value="16" id="length-slider" oninput="updateLength(this.value)">
         </div>
-        <div class="setting-item"><span>Заглавные буквы</span><label class="switch"><input type="checkbox" id="use-upper" checked><span class="slider"></span></label></div>
-        <div class="setting-item"><span>Строчные буквы</span><label class="switch"><input type="checkbox" id="use-lower" checked><span class="slider"></span></label></div>
-        <div class="setting-item"><span>Цифры</span><label class="switch"><input type="checkbox" id="use-numbers" checked><span class="slider"></span></label></div>
-        <div class="setting-item"><span>Символы</span><label class="switch"><input type="checkbox" id="use-symbols" checked><span class="slider"></span></label></div>
+        <div class="setting-item"><span>Заглавные (A-Z)</span><label class="switch"><input type="checkbox" id="use-upper" checked><span class="slider"></span></label></div>
+        <div class="setting-item"><span>Строчные (a-z)</span><label class="switch"><input type="checkbox" id="use-lower" checked><span class="slider"></span></label></div>
+        <div class="setting-item"><span>Цифры (0-9)</span><label class="switch"><input type="checkbox" id="use-numbers" checked><span class="slider"></span></label></div>
+        <div class="setting-item"><span>Символы (!@#)</span><label class="switch"><input type="checkbox" id="use-symbols" checked><span class="slider"></span></label></div>
+    </div>
+
+    <!-- Настройки: Фразовый -->
+    <div class="settings hidden" id="settings-phrase">
+        <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                <span>Количество слов</span>
+                <span class="length-value" id="words-val">4</span>
+            </div>
+            <input type="range" min="3" max="8" value="4" id="words-slider" oninput="updateWords(this.value)">
+        </div>
+        <div class="setting-item"><span>Разделитель</span>
+            <select id="separator">
+                <option value="-">-</option>
+                <option value="_">_</option>
+                <option value=".">.</option>
+                <option value=" ">Пробел</option>
+            </select>
+        </div>
+        <div class="setting-item"><span>Добавить цифры</span><label class="switch"><input type="checkbox" id="phrase-numbers" checked><span class="slider"></span></label></div>
+        <div class="setting-item"><span>Добавить символы</span><label class="switch"><input type="checkbox" id="phrase-symbols" checked><span class="slider"></span></label></div>
+    </div>
+
+    <!-- Настройки: PIN -->
+    <div class="settings hidden" id="settings-pin">
+        <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                <span>Длина PIN</span>
+                <span class="length-value" id="pin-val">6</span>
+            </div>
+            <input type="range" min="4" max="12" value="6" id="pin-slider" oninput="updatePin(this.value)">
+        </div>
+    </div>
+
+    <!-- Настройки: Слово-пароль -->
+    <div class="settings hidden" id="settings-word">
+        <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                <span>Длина цифровой части</span>
+                <span class="length-value" id="word-val">3</span>
+            </div>
+            <input type="range" min="1" max="6" value="3" id="word-slider" oninput="updateWord(this.value)">
+        </div>
+        <div class="setting-item"><span>Символ в конце</span><label class="switch"><input type="checkbox" id="word-symbols" checked><span class="slider"></span></label></div>
+    </div>
+
+    <!-- Автоочистка -->
+    <div class="setting-item" style="border: none; margin-bottom: 10px;">
+        <span>Автоочистка (30 сек)</span>
+        <label class="switch"><input type="checkbox" id="auto-clear"><span class="slider"></span></label>
     </div>
 
     <button class="btn-generate" onclick="generatePassword()">Сгенерировать</button>
+    <button class="btn-generate" style="background: transparent; color: var(--accent); margin-top: 10px; box-shadow: none; border: 1px solid var(--accent);" onclick="showHistory()">📜 История</button>
+
+    <!-- Блок истории -->
+    <div id="history-block" class="settings hidden" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="font-size: 14px; color: var(--text-muted);">История (последние 10)</h3>
+            <button onclick="clearHistory()" style="background: none; border: none; color: var(--error); font-size: 12px; cursor: pointer;">Очистить</button>
+        </div>
+        <div class="history-list" id="history-list"></div>
+    </div>
 </div>
 
-<div class="toast" id="toast">Пароль скопирован!</div>
+<div class="toast" id="toast">Готово!</div>
 
 <script>
+// === СЛОВАРЬ (100 слов) ===
+const wordList = [
+    "солнце", "луна", "звезда", "ветер", "огонь", "вода", "земля", "небо", "облако", "гроза",
+    "лес", "гора", "река", "океан", "поле", "сад", "цветок", "дерево", "камень", "песок",
+    "кот", "собака", "птица", "рыба", "медведь", "волк", "лиса", "заяц", "тигр", "лев",
+    "дом", "окно", "дверь", "стол", "стул", "книга", "ручка", "бумага", "ключ", "замок",
+    "машина", "поезд", "самолет", "корабль", "велосипед", "ракета", "мост", "дорога", "город", "деревня",
+    "хлеб", "молоко", "мясо", "сыр", "яблоко", "банан", "апельсин", "лимон", "груша", "слива",
+    "красный", "синий", "зеленый", "желтый", "черный", "белый", "серый", "фиолетовый", "розовый", "оранжевый",
+    "быстрый", "медленный", "высокий", "низкий", "горячий", "холодный", "светлый", "темный", "новый", "старый",
+    "веселый", "грустный", "умный", "добрый", "злой", "сильный", "слабый", "храбрый", "тихий", "громкий",
+    "бежать", "прыгать", "летать", "плавать", "читать", "писать", "рисовать", "петь", "танцевать", "играть"
+];
+
 const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const lowercase = "abcdefghijklmnopqrstuvwxyz";
 const numbers = "0123456789";
 const symbols = "!@#$%^&*()_+~`|}{[]:;?><,./-=";
 
 let currentPassword = "";
+let currentMode = 'standard';
+let history = JSON.parse(localStorage.getItem('passHistory') || '[]');
+let autoClearTimer = null;
+let timerFillInterval = null;
 
-function updateLength(val) {
-    document.getElementById('length-val').innerText = val;
+function setMode(mode, el) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+
+    document.querySelectorAll('.settings').forEach(s => s.classList.add('hidden'));
+    document.getElementById('history-block').classList.add('hidden');
+    
+    if (mode === 'standard') document.getElementById('settings-standard').classList.remove('hidden');
+    else if (mode === 'phrase') document.getElementById('settings-phrase').classList.remove('hidden');
+    else if (mode === 'pin') document.getElementById('settings-pin').classList.remove('hidden');
+    else if (mode === 'word') document.getElementById('settings-word').classList.remove('hidden');
+
+    generatePassword();
 }
 
+function updateLength(val) { document.getElementById('length-val').innerText = val; }
+function updateWords(val) { document.getElementById('words-val').innerText = val; }
+function updatePin(val) { document.getElementById('pin-val').innerText = val; }
+function updateWord(val) { document.getElementById('word-val').innerText = val; }
+
 function generatePassword() {
+    if (autoClearTimer) { clearTimeout(autoClearTimer); clearInterval(timerFillInterval); }
+    document.getElementById('timer-ind').classList.remove('active');
+    document.getElementById('timer-bar').style.display = 'none';
+
+    if (currentMode === 'standard') generateStandard();
+    else if (currentMode === 'phrase') generatePhrase();
+    else if (currentMode === 'pin') generatePin();
+    else if (currentMode === 'word') generateWord();
+
+    document.getElementById('qr-container').classList.add('hidden');
+    document.getElementById('password-display').innerText = currentPassword;
+    document.getElementById('password-display').style.opacity = 1;
+    
+    updateStrength(currentPassword);
+    addToHistory(currentPassword);
+    startAutoClear();
+}
+
+function generateStandard() {
     const length = document.getElementById('length-slider').value;
-    const useUpper = document.getElementById('use-upper').checked;
-    const useLower = document.getElementById('use-lower').checked;
-    const useNumbers = document.getElementById('use-numbers').checked;
-    const useSymbols = document.getElementById('use-symbols').checked;
-
     let charset = "";
-    if (useUpper) charset += uppercase;
-    if (useLower) charset += lowercase;
-    if (useNumbers) charset += numbers;
-    if (useSymbols) charset += symbols;
+    if (document.getElementById('use-upper').checked) charset += uppercase;
+    if (document.getElementById('use-lower').checked) charset += lowercase;
+    if (document.getElementById('use-numbers').checked) charset += numbers;
+    if (document.getElementById('use-symbols').checked) charset += symbols;
+    if (charset === "") { alert("Выберите параметры!"); return; }
+    let pwd = "";
+    for (let i = 0; i < length; i++) pwd += charset[Math.floor(Math.random() * charset.length)];
+    currentPassword = pwd;
+}
 
-    if (charset === "") {
-        alert("Выберите хотя бы один параметр!");
-        return;
+function generatePhrase() {
+    const count = parseInt(document.getElementById('words-slider').value);
+    const sep = document.getElementById('separator').value;
+    let words = [];
+    for (let i = 0; i < count; i++) {
+        let w = wordList[Math.floor(Math.random() * wordList.length)];
+        words.push(w.charAt(0).toUpperCase() + w.slice(1));
     }
+    let pwd = words.join(sep);
+    if (document.getElementById('phrase-numbers').checked) pwd += sep + Math.floor(Math.random() * 100);
+    if (document.getElementById('phrase-symbols').checked) pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    currentPassword = pwd;
+}
 
-    let password = "";
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
-        password += charset[randomIndex];
-    }
+function generatePin() {
+    const length = document.getElementById('pin-slider').value;
+    let pwd = "";
+    for (let i = 0; i < length; i++) pwd += numbers[Math.floor(Math.random() * 10)];
+    currentPassword = pwd;
+}
 
-    currentPassword = password;
-    document.getElementById('password-display').innerText = password;
-    updateStrength(password);
+function generateWord() {
+    const numLength = document.getElementById('word-slider').value;
+    let word = wordList[Math.floor(Math.random() * wordList.length)];
+    word = word.charAt(0).toUpperCase() + word.slice(1);
+    let num = "";
+    for (let i = 0; i < numLength; i++) num += numbers[Math.floor(Math.random() * 10)];
+    let pwd = word + num;
+    if (document.getElementById('word-symbols').checked) pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    currentPassword = pwd;
+}
+
+function startAutoClear() {
+    if (!document.getElementById('auto-clear').checked) return;
+    
+    const timerInd = document.getElementById('timer-ind');
+    const timerBar = document.getElementById('timer-bar');
+    const timerFill = document.getElementById('timer-fill');
+    
+    timerInd.classList.add('active');
+    timerBar.style.display = 'block';
+    timerFill.style.width = '100%';
+    
+    let timeLeft = 30;
+    timerInd.innerText = timeLeft + 's';
+    
+    timerFillInterval = setInterval(() => {
+        timeLeft--;
+        timerFill.style.width = (timeLeft / 30 * 100) + '%';
+        timerInd.innerText = timeLeft + 's';
+        if (timeLeft <= 0) clearInterval(timerFillInterval);
+    }, 1000);
+
+    autoClearTimer = setTimeout(() => {
+        document.getElementById('password-display').innerText = "[ СКРЫТО ]";
+        document.getElementById('password-display').style.opacity = 0.5;
+        timerInd.classList.remove('active');
+        timerBar.style.display = 'none';
+    }, 30000);
 }
 
 function updateStrength(password) {
     let strength = 0;
-    if (password.length > 8) strength += 1;
-    if (password.length > 12) strength += 1;
-    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+    if (password.length > 8) strength++;
+    if (password.length > 12) strength++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
 
     const fill = document.getElementById('strength-fill');
     const text = document.getElementById('strength-text');
 
-    if (strength <= 2) {
-        fill.style.width = "33%"; fill.style.background = "var(--error)"; text.innerText = "Слабый"; text.style.color = "var(--error)";
-    } else if (strength <= 4) {
-        fill.style.width = "66%"; fill.style.background = "var(--warning)"; text.innerText = "Средний"; text.style.color = "var(--warning)";
-    } else {
-        fill.style.width = "100%"; fill.style.background = "var(--success)"; text.innerText = "Надежный"; text.style.color = "var(--success)";
-    }
+    if (strength <= 2) { fill.style.width = "33%"; fill.style.background = "var(--error)"; text.innerText = "Слабый"; text.style.color = "var(--error)"; }
+    else if (strength <= 4) { fill.style.width = "66%"; fill.style.background = "var(--warning)"; text.innerText = "Средний"; text.style.color = "var(--warning)"; }
+    else { fill.style.width = "100%"; fill.style.background = "var(--success)"; text.innerText = "Надежный"; text.style.color = "var(--success)"; }
 }
 
 function copyPassword() {
-    if (currentPassword === "") return;
-    navigator.clipboard.writeText(currentPassword).then(() => {
-        const toast = document.getElementById('toast');
-        toast.classList.add('show');
-        setTimeout(() => { toast.classList.remove('show'); }, 2000);
+    if (!currentPassword || document.getElementById('password-display').innerText === "[ СКРЫТО ]") return;
+    navigator.clipboard.writeText(currentPassword).then(() => showToast("Скопировано!"));
+}
+
+function toggleQR() {
+    if (!currentPassword) return;
+    const container = document.getElementById('qr-container');
+    if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.innerHTML = "";
+    new QRCode(container, {
+        text: currentPassword,
+        width: 150,
+        height: 150,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
     });
+    container.classList.remove('hidden');
+}
+
+function addToHistory(pwd) {
+    if (!pwd) return;
+    if (history[0] === pwd) return; // не дублируем
+    history.unshift(pwd);
+    if (history.length > 10) history.pop();
+    localStorage.setItem('passHistory', JSON.stringify(history));
+}
+
+function showHistory() {
+    const block = document.getElementById('history-block');
+    block.classList.toggle('hidden');
+    if (block.classList.contains('hidden')) return;
+    
+    const list = document.getElementById('history-list');
+    list.innerHTML = "";
+    if (history.length === 0) { list.innerHTML = "<p style='text-align:center; color:var(--text-muted); font-size:12px;'>История пуста</p>"; return; }
+    
+    history.forEach((pwd, i) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span class="history-text" onclick="copyFromHistory('${pwd}')">${pwd}</span><button class="history-del" onclick="deleteHistory(${i})">✕</button>`;
+        list.appendChild(div);
+    });
+}
+
+function copyFromHistory(pwd) {
+    navigator.clipboard.writeText(pwd).then(() => showToast("Скопировано из истории!"));
+}
+
+function deleteHistory(index) {
+    history.splice(index, 1);
+    localStorage.setItem('passHistory', JSON.stringify(history));
+    showHistory();
+}
+
+function clearHistory() {
+    history = [];
+    localStorage.setItem('passHistory', JSON.stringify([]));
+    showHistory();
+    showToast("История очищена");
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
 window.toggleTheme = () => {
     const body = document.body, btn = document.getElementById('theme-btn');
-    if (body.getAttribute('data-theme') === 'light') { 
-        body.removeAttribute('data-theme'); 
-        btn.innerText = '🌙'; 
-    } else { 
-        body.setAttribute('data-theme', 'light'); 
-        btn.innerText = '☀️'; 
-    }
+    if (body.getAttribute('data-theme') === 'light') { body.removeAttribute('data-theme'); btn.innerText = '🌙'; }
+    else { body.setAttribute('data-theme', 'light'); btn.innerText = '☀️'; }
 };
 
-window.onload = () => {
-    generatePassword();
-};
+window.onload = () => { generatePassword(); };
 </script>
 </body>
-</html>
+                                                                  </html>
